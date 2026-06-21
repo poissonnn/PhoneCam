@@ -14,7 +14,7 @@ mp_hands = mp.solutions.hands
 width = 800
 height = 500
 
-url = "http://192.168.1.30:4747/video"
+url = "http://192.168.1.168:4747/video"
 camera = cv2.VideoCapture(url)
 
 with mp_hands.Hands(

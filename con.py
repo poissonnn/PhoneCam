@@ -45,15 +45,26 @@ cooldown = 0.2
 last_click = 0
 is_click = False
 
+FrameCount = 0
+FRAMESTEP = 3
+prev_frame_time = 0
+new_frame_time = 0
+
 x = 0
 y = 0
 minus_t1 = 0
+
+recycle_result = None
+
+font = cv2.FONT_HERSHEY_SIMPLEX
 
 url = "http://192.168.1.168:4747/video"
 camera = cv2.VideoCapture(url)
 
 def finger_position(finger_part_name, COLOR):
+    print(finger_part_name)
     finger_part = getattr(mp_hands.HandLandmark, finger_part_name)
+    print(finger_part)
     finger_part_position = hand_landmarks.landmark[finger_part]
 
     CircleX = int(finger_part_position.x * width)
@@ -88,12 +99,22 @@ with mp_hands.Hands(
 
     while True:
         t0 = time.time()
+        new_frame_time = time.time()
+
         _, frame = camera.read()
 
+        if(FrameCount == 0):
+            result = hands.process(smaller_frame)
+            recycle_result = result
+            cv2.rectangle(frame, (0, 0), (40, 40),GREEN, -1)
+            
+
+        elif(FrameCount !=0):
+            result = recycle_result
+            cv2.rectangle(frame, (0, 0), (40, 40),RED, -1)
+        
+        
         frame = cv2.resize(frame, (width, height))
-        #image = cv2.flip(image, 0)
-        #Rotated_image = cv2.getRotationMatrix2D(center, 270, 1.0)
-        #image = cv2.warpAffine(image, Rotated_image, (width, height))
         t1 = time.time()-t0
 
         #change image to process it
@@ -101,22 +122,12 @@ with mp_hands.Hands(
         smaller_frame.flags.writeable = False
         smaller_frame = cv2.cvtColor(smaller_frame, cv2.COLOR_BGR2RGB)
         
-        result = hands.process(smaller_frame)
+        
         t2 = time.time()-t0
-
-        t3 = time.time()-t0
         
         if result.multi_hand_landmarks:
             for hand_landmarks in result.multi_hand_landmarks:
-                """
-                mp_drawing.draw_landmarks(
-                    image,
-                    hand_landmarks,
-                    mp_hands.HAND_CONNECTIONS,
-                    mp_drawing_styles.get_default_hand_landmarks_style(),
-                    mp_drawing_styles.get_default_hand_connections_style()
-                )
-                """
+                
                 p1 = finger_position("THUMB_TIP", RED)
                 p2 = finger_position("INDEX_FINGER_TIP", GREEN)
                 p3 = finger_position("MIDDLE_FINGER_TIP", GREEN)
@@ -135,29 +146,32 @@ with mp_hands.Hands(
                         is_click = False
                         mc.mouse_up("left")
                         print("no")
-                """
-                
-                if line1 == True:
-                    if is_click == False:
-                        is_click = True
-                else:
-                    if is_click == True:
-                        is_click = False
-                """
+
                 """
                 if time.time() >  last_click + cooldown:
                     mc.move_to(p4[0]+1920,p4[1])
                     last_click = time.time() 
                 """   
                 
-            
+        #calculate fps and show it
+        fps = 1/(new_frame_time-prev_frame_time)
+        prev_frame_time = new_frame_time    
+        cv2.putText(frame, str(int(fps)), (20, 30), font, 1, (0, 0, 0), 2)
+
+        #show the image 
         cv2.imshow("oui",frame)
 
-        t4 = time.time()-t0
-
-        print(f"-t1 : {round(t0-minus_t1,4)} | t0 : {t0-t0} | t1 : {round(t1,4)} | t2 : {round(t2,4)} | t3 : {round(t3,4)} | t4 : {round(t4,4)} |")
-
+        # debug timer
+        t3 = time.time()-t0
+        print(f"-t1 : {round(t0-minus_t1,4)} | t0 : {t0-t0} | t1 : {round(t1,4)} | t2 : {round(t2,4)} | t3 : {round(t3,4)} |")
         minus_t1 = t0
+
+        if (FrameCount >= FRAMESTEP):
+            FrameCount = 0 
+        else:
+            FrameCount = FrameCount + 1
+
+
         if cv2.waitKey(1) == ord('q'):
             break
 
