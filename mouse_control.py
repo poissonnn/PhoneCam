@@ -36,8 +36,9 @@ _last_position = (0, 0)
 def move_to(x: int, y: int):
     """Déplace la souris à des coordonnées absolues GLOBALES (x, y)."""
     global _last_position
+    x, y = int(x), int(y)
     subprocess.run(
-        ["swaymsg", "seat", "seat0", "cursor", "set", str(x), str(y)],
+        ["swaymsg", "--", "seat", "seat0", "cursor", "set", str(x), str(y)],
         check=True,
     )
     _last_position = (x, y)

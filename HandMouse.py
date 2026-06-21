@@ -31,20 +31,23 @@ WHITE = (255,255,255)
 GREEN = (121,240,132)
 RED = (76,48,246)
 
-width = 1000
-height = 600
+width = 1920
+height = 1080
+process_width = 640
+process_height = 400
 center = (width//2, height//2)
 
 marge = 10 # in pixel
 
-cooldown = 0.5
+cooldown = 0.1
 last_click = 0
 is_click = False
 
 x = 0
 y = 0
+minus_t1 = 0
 
-url = "http://192.168.1.168:4747/video"
+url = "http://192.168.1.30:4747/video"
 camera = cv2.VideoCapture(url)
 
 def finger_position(position, COLOR):
@@ -84,30 +87,32 @@ def finger_switch(p1,p2,distance_i_want = 100):
 
 
 with mp_hands.Hands(
-    model_complexity = 1,
+    model_complexity = 0,
     min_detection_confidence = 0.5,
     min_tracking_confidence = 0.5) as hands:
 
     while True:
+        t0 = time.time()
         _, image = camera.read()
 
         image = cv2.resize(image, (width, height))
         #image = cv2.flip(image, 0)
         #Rotated_image = cv2.getRotationMatrix2D(center, 270, 1.0)
         #image = cv2.warpAffine(image, Rotated_image, (width, height))
+        t1 = time.time()-t0
 
         #change image to process it
-        image.flags.writeable = False
-        image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        result = hands.process(image)
+        small_image = cv2.resize(image, (process_width, process_height))
+        small_image.flags.writeable = False
+        small_image = cv2.cvtColor(small_image, cv2.COLOR_BGR2RGB)
+        result = hands.process(small_image)
+        t2 = time.time()-t0
 
-        #reconvert it to show the image correctly later
-        image.flags.writeable = True
-        image = cv2.cvtColor(image, cv2.COLOR_RGB2BGR)
-
+        t3 = time.time()-t0
+        
         if result.multi_hand_landmarks:
             for hand_landmarks in result.multi_hand_landmarks:
-                
+                """
                 mp_drawing.draw_landmarks(
                     image,
                     hand_landmarks,
@@ -115,7 +120,7 @@ with mp_hands.Hands(
                     mp_drawing_styles.get_default_hand_landmarks_style(),
                     mp_drawing_styles.get_default_hand_connections_style()
                 )
-                
+                """
                 
                 index_tip_position = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 thumb_tip_position = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
@@ -128,14 +133,10 @@ with mp_hands.Hands(
                 line1 = finger_switch(p1,p2,40)
                 line2 = finger_switch(p2,p3,80)
 
-                """
-                if line1 == True and line2 == False and time.time() >  last_click + cooldown:
 
-                    last_click = time.time() 
-                    print("click")
-                    mc.mouse_down("left")
-                """
 
+            
+                """
                 if line1 == True and line2 == False:
                     if is_click == False:
                         print("click")
@@ -146,13 +147,27 @@ with mp_hands.Hands(
                         is_click = False
                         mc.mouse_up("left")
                         print("no")
-                    
-                    
+                """
                 
+                if line1 == True:
+                    if is_click == False:
+                        is_click = True
+                else:
+                    if is_click == True:
+                        is_click = False
+                
+                if time.time() >  last_click + cooldown and is_click:
+                    mc.move_to(p2[0],p2[1])
+                    last_click = time.time() 
+                
+            
+        #cv2.imshow("oui",image)
 
+        t4 = time.time()-t0
 
-        cv2.imshow("oui",image)
+        print(f"-t1 : {round(t0-minus_t1,4)} | t0 : {t0-t0} | t1 : {round(t1,4)} | t2 : {round(t2,4)} | t3 : {round(t3,4)} | t4 : {round(t4,4)} |")
 
+        minus_t1 = t0
         if cv2.waitKey(1) == ord('q'):
             break
 
