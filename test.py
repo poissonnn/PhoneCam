@@ -1,11 +1,15 @@
 import time
 import mouse_control as mc
+import pyautogui
+import wayland_automation as wa
 
 cooldown = 0.5  # en secondes (ex: 500 ms)
 last_click = 0
 
 
 i = 0
+
+
 
 while True:
     

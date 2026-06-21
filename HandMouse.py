@@ -1,5 +1,11 @@
 #3.12.10
 
+import warnings
+warnings.filterwarnings("ignore", category=UserWarning, module="google.protobuf")
+import os
+os.environ["GLOG_minloglevel"] = "2"
+os.environ["TF_CPP_MIN_LOG_LEVEL"] = "3"
+
 import math
 import numpy as np
 import time
@@ -7,12 +13,12 @@ import time
 import cv2
 import mouse
 import mediapipe as mp
-import pyautogui
+import pyautogui as gui
 
 import mouse_control as mc
 
-print(mp.__version__)
-print(mp.__file__)
+#print(mp.__version__)
+#print(mp.__file__)
 
 mp_drawing = mp.solutions.drawing_utils
 mp_drawing_styles = mp.solutions.drawing_styles
@@ -26,7 +32,7 @@ GREEN = (121,240,132)
 RED = (76,48,246)
 
 width = 1000
-height = 1000
+height = 600
 center = (width//2, height//2)
 
 marge = 10 # in pixel
@@ -85,9 +91,9 @@ with mp_hands.Hands(
         _, image = camera.read()
 
         image = cv2.resize(image, (width, height))
-        image = cv2.flip(image, 0)
-        Rotated_image = cv2.getRotationMatrix2D(center, 270, 1.0)
-        image = cv2.warpAffine(image, Rotated_image, (width, height))
+        #image = cv2.flip(image, 0)
+        #Rotated_image = cv2.getRotationMatrix2D(center, 270, 1.0)
+        #image = cv2.warpAffine(image, Rotated_image, (width, height))
 
         #change image to process it
         image.flags.writeable = False
@@ -100,7 +106,7 @@ with mp_hands.Hands(
 
         if result.multi_hand_landmarks:
             for hand_landmarks in result.multi_hand_landmarks:
-                """
+                
                 mp_drawing.draw_landmarks(
                     image,
                     hand_landmarks,
@@ -108,7 +114,7 @@ with mp_hands.Hands(
                     mp_drawing_styles.get_default_hand_landmarks_style(),
                     mp_drawing_styles.get_default_hand_connections_style()
                 )
-                """
+                
                 
                 index_tip_position = hand_landmarks.landmark[mp_hands.HandLandmark.INDEX_FINGER_TIP]
                 thumb_tip_position = hand_landmarks.landmark[mp_hands.HandLandmark.THUMB_TIP]
@@ -118,13 +124,14 @@ with mp_hands.Hands(
                 p2 = finger_position(index_tip_position, RED)
                 p3 = finger_position(middle_tip_position, GREEN)
 
-                line1 = finger_switch(p1,p2,30)
-                line2 = finger_switch(p2,p3,60)
+                line1 = finger_switch(p1,p2,40)
+                line2 = finger_switch(p2,p3,80)
 
-                if line1 == True and line2 == False:
-                    
-                    
-                    mc.left_click()
+                if line1 == True and line2 == False and time.time() >  last_click + cooldown:
+
+                    last_click = time.time() 
+                    print("click")
+                    gui.click()
                     
                 
 
