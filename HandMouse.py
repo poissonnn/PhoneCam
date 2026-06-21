@@ -39,6 +39,7 @@ marge = 10 # in pixel
 
 cooldown = 0.5
 last_click = 0
+is_click = False
 
 x = 0
 y = 0
@@ -127,11 +128,25 @@ with mp_hands.Hands(
                 line1 = finger_switch(p1,p2,40)
                 line2 = finger_switch(p2,p3,80)
 
+                """
                 if line1 == True and line2 == False and time.time() >  last_click + cooldown:
 
                     last_click = time.time() 
                     print("click")
-                    gui.click()
+                    mc.mouse_down("left")
+                """
+
+                if line1 == True and line2 == False:
+                    if is_click == False:
+                        print("click")
+                        is_click = True
+                        mc.mouse_down("left")
+                else:
+                    if is_click == True:
+                        is_click = False
+                        mc.mouse_up("left")
+                        print("no")
+                    
                     
                 
 
