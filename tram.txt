@@ -1,0 +1,15 @@
+divided in 5 part:
+
+t0
+- reading the frame
+t1
+- preparing the frame
+t2
+- analizing the frame
+t3
+- the use of the hand mouvement
+t4
+- showing the image 
+t5
+  (not neccesary to the programme)
+

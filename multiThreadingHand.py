@@ -18,6 +18,7 @@ import mediapipe as mp
 import pyautogui as gui
 
 import mouse_control as mc
+import graph
 
 #print(mp.__version__)
 #print(mp.__file__)
@@ -45,16 +46,14 @@ cooldown = 0.2
 last_click = 0
 is_click = False
 
-FrameCount = 0
-FRAMESTEP = 1
-prev_frame_time = 0
-new_frame_time = 0
+round_value = 4
 
 x = 0
 y = 0
 minus_t1 = 0
 
-recycle_result = None
+debug_timings = {"t1" : [], "t2" : [], "t3" : [], "t4" : [], "t5" : []}
+
 
 font = cv2.FONT_HERSHEY_SIMPLEX
 
@@ -97,30 +96,50 @@ def finger_switch(p1,p2,distance_i_want = 100):
     cv2.line(frame, (p1[0], p1[1]), (p2[0], p2[1]), COLOR, 2)
     return fingerClose
 
+def reading_frame():
+    ret , frame = camera.read()
+    return frame
+
+def preprocess_frame(frame):
+
+    smaller_frame = cv2.resize(frame, (process_width, process_height))
+    smaller_frame.flags.writeable = False
+    smaller_frame = cv2.cvtColor(smaller_frame, cv2.COLOR_BGR2RGB)
+
+    frame = cv2.resize(frame, (width, height))
+    return smaller_frame, frame
+    
+def process_frame(smaller_frame):
+    result = hands.process(smaller_frame)
+    return result
+
+def show_image(frame):
+    cv2.imshow("oui",frame)
+
+
+debug_safe = 0
 
 with mp_hands.Hands(
     model_complexity = 1,
     min_detection_confidence = 0.5,
     min_tracking_confidence = 0.5) as hands:
 
-    while True:
+    while debug_safe < 100:
+        debug_safe += 1
+
         t0 = time.time()
-        new_frame_time = time.time()
+        
 
-        _, frame = camera.read()
-
-        #change image to process it
-        smaller_frame = cv2.resize(frame, (process_width, process_height))
-        smaller_frame.flags.writeable = False
-        smaller_frame = cv2.cvtColor(smaller_frame, cv2.COLOR_BGR2RGB)
-        result = hands.process(smaller_frame)
+        frame = reading_frame()
         t1 = time.time()-t0
 
-
-        frame = cv2.resize(frame, (width, height))
-
-        
+        small_frame , frame = preprocess_frame(frame)
         t2 = time.time()-t0
+
+        result = process_frame(small_frame)
+        t3 = time.time()-t0
+
+
         
         if result.multi_hand_landmarks:
             for hand_landmarks in result.multi_hand_landmarks:
@@ -148,22 +167,33 @@ with mp_hands.Hands(
                 if line2 == True:
                    mc.move_to(p4[0]+1920,p4[1])
                 
-                
-        #calculate fps and show it
-        fps = 1/(new_frame_time-prev_frame_time)
-        prev_frame_time = new_frame_time    
-        cv2.putText(frame, str(int(fps)), (20, 30), font, 1, (0, 0, 0), 2)
+        t4 = time.time()-t0 
 
-        #show the image 
-        cv2.imshow("oui",frame)
+        show_image(frame)
 
-        # debug timer
-        t3 = time.time()-t0
-        print(f"-t1 : {round(t0-minus_t1,4)} | t0 : {t0-t0} | t1 : {round(t1,4)} | t2 : {round(t2,4)} | t3 : {round(t3,4)} |")
+        # debug 
+        t5 = time.time()-t0
+
+        print(f"-t1 : {t0-minus_t1:.3f} | t0 : {0:.3f} | t1 : {t1:.3f} | t2 : {t2:.3f} | t3 : {t3:.3f} | t4 : {t4:.3f} | t5 : {t5:.3f} ")
+        
+        debug_timings["t1"].append(round(t1, round_value))
+        debug_timings["t2"].append(round(t2 - t1, round_value))
+        debug_timings["t3"].append(round(t3 - t2, round_value))
+        debug_timings["t4"].append(round(t4 - t3, round_value))
+        debug_timings["t5"].append(round(t5 - t4, round_value))
+
+
         minus_t1 = t0
+
+        
 
         if cv2.waitKey(1) == ord('q'):
             break
+
+# to avoid the mouse to press indefinilty
+mc.mouse_up("left")
+graph.graph_timings(debug_timings)
+
 
 camera.release()
 cv2.destroyAllWindows()
