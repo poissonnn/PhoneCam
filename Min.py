@@ -4,7 +4,7 @@ import numpy as np
 
 print("cv2")
 
-url = "http://192.168.1.30:4747/video"
+url = "http://192.168.1.168:8080/video"
 camera = cv2.VideoCapture(url)
 
 

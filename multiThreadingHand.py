@@ -113,20 +113,10 @@ with mp_hands.Hands(
         smaller_frame = cv2.resize(frame, (process_width, process_height))
         smaller_frame.flags.writeable = False
         smaller_frame = cv2.cvtColor(smaller_frame, cv2.COLOR_BGR2RGB)
-
+        result = hands.process(smaller_frame)
         t1 = time.time()-t0
 
-        if(FrameCount == 0):
-            result = hands.process(smaller_frame)
-            recycle_result = result
-            cv2.rectangle(frame, (0, 0), (40, 40),GREEN, -1)
-            
 
-        elif(FrameCount !=0):
-            result = recycle_result
-            cv2.rectangle(frame, (0, 0), (40, 40),RED, -1)
-        
-        
         frame = cv2.resize(frame, (width, height))
 
         
@@ -154,16 +144,15 @@ with mp_hands.Hands(
                         mc.mouse_up("left")
                         print("no")
 
-                """
+                
                 if line2 == True:
                    mc.move_to(p4[0]+1920,p4[1])
-                """
+                
                 
         #calculate fps and show it
         fps = 1/(new_frame_time-prev_frame_time)
         prev_frame_time = new_frame_time    
         cv2.putText(frame, str(int(fps)), (20, 30), font, 1, (0, 0, 0), 2)
-        cv2.putText(frame, str(int(FrameCount)), (40, 60), font, 1, (0, 0, 0), 2)
 
         #show the image 
         cv2.imshow("oui",frame)
@@ -172,12 +161,6 @@ with mp_hands.Hands(
         t3 = time.time()-t0
         print(f"-t1 : {round(t0-minus_t1,4)} | t0 : {t0-t0} | t1 : {round(t1,4)} | t2 : {round(t2,4)} | t3 : {round(t3,4)} |")
         minus_t1 = t0
-
-        if (FrameCount >= FRAMESTEP):
-            FrameCount = 0 
-        else:
-            FrameCount = FrameCount + 1
-
 
         if cv2.waitKey(1) == ord('q'):
             break

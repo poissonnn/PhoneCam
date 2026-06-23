@@ -15,10 +15,20 @@ def cube(num):
     time.sleep(1)
     
 
-square = square(10)
+first_thread = threading.Thread(target=square, args=(4,))
+second_thread = threading.Thread(target=cube, args=(4,))
+
+first_thread.start()
+second_thread.start()
 t1 = time.time() - t0
 
-cube = cube(10)
+print("anana")
+
+first_thread.join()
+second_thread.join()
 t2 = time.time() - t0
+
+
+
 
 print(f"t0 : {t0-t0} | t1 : {round(t1,4)} | t2 : {round(t2,4)}")
